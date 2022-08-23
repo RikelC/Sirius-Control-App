@@ -1,6 +1,6 @@
 # Sirius-Control-App
 
-This is a simple GUI developed using gtk-2. The goal is to bring different tasks achieved using different scripts under one framework to ease the process for our collaborators and the future SIRIUS users. The users can perform:
+This is a simple GUI developed using gtk-2. The goal is to bring different tasks achieved using different scripts under one framework to ease the process for our collaborators and the future SIRIUS users. Note that GUI serves as an skeleton program for different shell scripts and other programs written by Sebetian Coudert, me and other collaborators. The users can perform:
 
 1. Necassary Chack:
 ->Boards ON/OFF Status: This check must be performed first. It shows whether all the boards listed in "Board Config file" are ON or OFF.
