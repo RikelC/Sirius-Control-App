@@ -53,9 +53,10 @@ class BASELINE{
 //--------------------
 // Global variables
 // ------------------
+bool check_gtsServer = false;
 static std::string command_init_func;
 static std::string command_misc_func;
-
+static std::string command_tmux_window_choice;
 static std::string command_th_polarity;
 static std::string command2;
 static std::string commandTempUnit;
@@ -67,6 +68,7 @@ static std::string dataflow_calInterval = "1";
 static std::string dataflow_animationInterval = "1";
 static std::string boardList_str;
 std::vector<int> boardList;
+std::vector<std::string> boardTypeList;
 std::vector<int> boardList_DSSD;
 std::vector<int> boardList_DSSD_front;
 std::vector<int> boardList_DSSD_back;
@@ -78,6 +80,7 @@ std::vector<BASELINE>numexo_baseline;
 const gchar *user_entryData;
 const gchar *user_entryData2;
 static pid_t child_pid =-1;
+static pid_t mother_pid =-1;
 //----baseline
 GtkWidget *user_entry_baseline_board;
 GtkWidget *user_entry_baseline_channel;
@@ -92,6 +95,15 @@ GtkWidget *user_entry_threshold_value;
 const gchar *user_entryChannel2;
 const gchar *user_entryBoard2;
 const gchar *user_entryValue2;
+
+
+GtkWidget *user_entry_trigger_board;
+const gchar *user_entryBoard3;
+
+GtkWidget *user_entry_trigger_value_K;
+GtkWidget *user_entry_trigger_value_M;
+const gchar *user_entryValueK;
+const gchar *user_entryValueM;
 
 gchar* convert_to_upper(const gchar *v){
 	static gchar str[1000];
@@ -110,8 +122,8 @@ gchar* convert_to_upper(const gchar *v){
 }
 
 std::string convert_to_upper2(std::string v){
-std::string new_str = "";	
-char ch;
+	std::string new_str = "";	
+	char ch;
 	for(int i =0; i <v.length();i++){
 		ch = v[i];
 		if(islower(ch)){
@@ -127,8 +139,8 @@ char ch;
 
 
 void convert_to_upper(std::string v){
-std::string new_str = "";	
-char ch;
+	std::string new_str = "";	
+	char ch;
 	for(int i =0; i <v.length();i++){
 		ch = v[i];
 		if(islower(ch)){
@@ -152,6 +164,7 @@ void signalHandler(int signal_number)
 		cout<<"SIGINT signal = "<<signal_number<<"received!\n";
 	}
 	kill(child_pid, signal_number);
+	kill(mother_pid, signal_number);
 
 
 }
@@ -163,7 +176,7 @@ void get_nActiveBoards();
 void check_Boards_ONOFF_status();
 void check_Boards_ONOFF_status2();
 void show_firmware_version(){
-	if(boardList.empty()) cout<<"First Check ON/OFF Status of the Boards"<<endl;
+	if(boardList.empty()) cout<<RED<<"First Check ON/OFF Status of the Boards"<<RESET<<endl;
 	else{
 		numexo.clear();
 
@@ -229,9 +242,12 @@ void show_firmware_version(){
 
 	}
 	cout<<GREEN<<"Board" <<"   "<<RED<< "V5 Firmware" <<"                  "<<BLUE<<"V6 Firmware"<<RESET<<endl;
+	int i = 0;
 	for(auto &it : numexo){
 
+		//cout<<GREEN<<boardTypeList[i]<<" "<<it.Board <<"     "<<RED<< it.firmware_v5 <<"     "<<BLUE<<it.firmware_v6<<RESET<<endl;
 		cout<<GREEN<<it.Board <<"     "<<RED<< it.firmware_v5 <<"     "<<BLUE<<it.firmware_v6<<RESET<<endl;
+		i++;
 	}
 
 }
@@ -409,7 +425,7 @@ void open_Board_configFile(){
 	else if (child_pid > 0) {//Returned to parent or caller. The value contains process ID of newly created child process.
 		signal(SIGTERM, signalHandler);
 		signal(SIGINT, signalHandler);
-		system("gedit /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/ConfigFiles/numexo2Boards.config &");
+		system("gedit /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/ConfigFiles/numexo2Boards.config &");
 	} else {//Returned to the newly created child process.
 		exit(EXIT_FAILURE);
 	}
@@ -418,9 +434,9 @@ void open_Board_configFile(){
 
 }
 //-----------------
-// GRU
+// GRU 1
 //----------------
-void open_gru_config(){
+void open_gru_config1(){
 
 
 	child_pid = fork();
@@ -431,7 +447,7 @@ void open_gru_config(){
 	else if (child_pid > 0) {//Returned to parent or caller. The value contains process ID of newly created child process.
 		signal(SIGTERM, signalHandler);
 		signal(SIGINT, signalHandler);
-		system("gedit /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/ConfigFiles/Run.config &");
+		system("gedit /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/ConfigFiles/Run_online.config &");
 	} else {//Returned to the newly created child process.
 		exit(EXIT_FAILURE);
 	}
@@ -439,42 +455,75 @@ void open_gru_config(){
 	//	system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/launch_gruConfig.csh");
 }
 
-void perform_gru_launch(){
+void perform_gru_launch1(){
 
-	system("source /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/launch_gruScript.csh &");
-
-}
-void kill_gru(){
-	system("bash /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/kill_gruScript.sh");
-}
-
-void perform_vigru_launch(){
-
-	system("source /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/launch_vigru.csh");
+	system("bash /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/launch_gruScript_online.sh &");
 
 }
+void kill_gru1(){
+	system("bash /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/kill_gruScript_online.sh");
+}
 
+void perform_vigru_launch1(){
+
+	system("bash /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/launch_vigru_online.sh");
+
+}
+//-----------------
+// GRU 2
+//----------------
+void open_gru_config2(){
+
+
+	child_pid = fork();
+	if (child_pid == -1) {//creation of a child process was unsuccessful.
+		perror("fork");
+		exit(EXIT_FAILURE);
+	} 
+	else if (child_pid > 0) {//Returned to parent or caller. The value contains process ID of newly created child process.
+		signal(SIGTERM, signalHandler);
+		signal(SIGINT, signalHandler);
+		system("gedit /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/ConfigFiles/Run_offline.config &");
+	} else {//Returned to the newly created child process.
+		exit(EXIT_FAILURE);
+	}
+
+	//	system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/launch_gruConfig.csh");
+}
+
+void perform_gru_launch2(){
+
+	system("bash /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/launch_gruScript_offline.sh &");
+
+}
+void kill_gru2(){
+	system("bash /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/kill_gruScript_offline.sh");
+}
+
+void perform_vigru_launch2(){
+
+	system("bash /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/launch_vigru_offline.sh");
+
+}
 //-----------------
 // GUser
 //----------------
 void open_guser_documentation(){
 
-        child_pid = fork();
-        if (child_pid == -1) {//creation of a child process was unsuccessful.
-                perror("fork");
-                exit(EXIT_FAILURE);
-        }
-        else if (child_pid > 0) {//Returned to parent or caller. The value contains process ID of newly created child process.
-                signal(SIGTERM, signalHandler);
-                signal(SIGINT, signalHandler);
-                system("firefox /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/Documentation/html/index.html &");
-        } else {//Returned to the newly created child process.
-                exit(EXIT_FAILURE);
-        }
+	child_pid = fork();
+	if (child_pid == -1) {//creation of a child process was unsuccessful.
+		perror("fork");
+		exit(EXIT_FAILURE);
+	} 
+	else if (child_pid > 0) {//Returned to parent or caller. The value contains process ID of newly created child process.
+		signal(SIGTERM, signalHandler);
+		signal(SIGINT, signalHandler);
+		system("firefox /home/sirius/ganacq_manip/test/GRU_SIRIUS/Documentation/html/index.html &");
+	} else {//Returned to the newly created child process.
+		exit(EXIT_FAILURE);
+	}
 
-        //      system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/openGuserWorkspace.csh");
-        //      }
-        //
+	//	system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/openGuserWorkspace.csh");
 }
 void open_guser_workspace(){
 
@@ -486,23 +535,24 @@ void open_guser_workspace(){
 	else if (child_pid > 0) {//Returned to parent or caller. The value contains process ID of newly created child process.
 		signal(SIGTERM, signalHandler);
 		signal(SIGINT, signalHandler);
-		system("gedit /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-sources/GUser.C  /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-sources/GUser.h &");
+		system("gedit /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-sources/GUser.C  /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-sources/GUser.h &");
 	} else {//Returned to the newly created child process.
 		exit(EXIT_FAILURE);
 	}
 
 	//	system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/openGuserWorkspace.csh");
 }
+
 void do_guser_cmake(){
-	system("csh /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/doCmake.csh 2");
+	system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/doCmake.csh 2");
 }
 
 void do_guser_cleanmake(){
-	system("csh /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/doCleanMake.csh 2");
+	system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/doCleanMake.csh 2");
 }
 
 void do_guser_make(){
-	system("csh /home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/doMake.csh 2");
+	system("csh /home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/doMake.csh 2");
 }
 
 void check_network_readiness(){
@@ -538,7 +588,7 @@ void miscellaneous_function(){
 		else if(command_misc_func.compare("Show Narval State") == 0)
 			system("bash /home/sirius/bin/narval_state.sh");
 		else
-			std::cout<<"Select from the drop-down list....\n";
+			std::cout<<BLUE<<"Select from the drop-down list....\n"<<RESET;
 	} else {//Returned to the newly created child process.
 		exit(EXIT_FAILURE);
 	}
@@ -558,9 +608,9 @@ void execute_AutoInit_function(){
 		signal(SIGINT, signalHandler);
 
 		system("csh /home/sirius/SetupGTS");
-		cout<<"GTS setup done......."<<endl;		
+		cout<<GREEN<<"GTS setup done......."<<RESET<<endl;		
 		system("csh /home/sirius/config_v6_sirius.csh");
-		cout<<"numexo2 board configuration finished...."<<endl;
+		cout<<GREEN<<"numexo2 board configuration finished...."<<RESET<<endl;
 	} else {//Returned to the newly created child process.
 		exit(EXIT_FAILURE);
 	}
@@ -568,6 +618,29 @@ void execute_AutoInit_function(){
 
 
 }
+
+void execute_beast_server(){
+	system("csh /home/sirius/launch_GET_SETUP.csh GTS_beast");
+	check_gtsServer = true;
+}
+
+
+void execute_beast_matrix(){
+	system("csh /home/sirius/launch_GET_SETUP.csh Beast_Matrix");
+}
+
+void execute_Ecc_server(){
+	system("csh /home/sirius/launch_GET_SETUP.csh GET_Soap_Server");
+}
+
+void execute_usb(){
+	system("csh /home/sirius/launch_GET_SETUP.csh USBConsole");
+}
+
+void execute_get_kill(){
+	system("bash /home/sirius/quit_getSetup_Viewer.sh");
+}
+
 
 
 
@@ -591,6 +664,9 @@ void execute_config_boards(){
 }
 
 void execute_setupGTS(){
+
+	//if(check_gtsServer){
+
 	child_pid = fork();
 	if (child_pid == -1) {//creation of a child process was unsuccessful.
 		perror("fork");
@@ -605,6 +681,10 @@ void execute_setupGTS(){
 	} else {//Returned to the newly created child process.
 		exit(EXIT_FAILURE);
 	}
+	//}else{
+
+	//	cout<<RED <<" First Launch the GTS Server...."<<RESET<<endl;
+	//}
 
 
 
@@ -615,12 +695,12 @@ void execute_baseline_read(){
 	user_entryChannel1= gtk_entry_get_text(GTK_ENTRY(user_entry_baseline_channel));
 	std::string board = convert_to_upper(user_entryBoard1);
 	std::string channel = convert_to_upper(user_entryChannel1);
-	cout<<"Board: "<<board<<"  Channel: "<<channel<<endl;
+	//	cout<<"Board: "<<board<<"  Channel: "<<channel<<endl;
 	char cmd[500];
 	sprintf(cmd, "bash /home/sirius/numexo_baseline.sh READ %s %s", board.data(), channel.data());
 	system(cmd);
-board.clear();
-channel.clear();
+	board.clear();
+	channel.clear();
 
 }
 
@@ -634,13 +714,13 @@ void execute_baseline_write(){
 	std::string board = convert_to_upper(user_entryBoard1);
 	std::string channel = convert_to_upper(user_entryChannel1);
 	std::string value = convert_to_upper(user_entryValue1);
-	cout<<"Board: "<<board<<"  Channel: "<<channel<<" Value: "<<value <<endl;
+	//	cout<<"Board: "<<board<<"  Channel: "<<channel<<" Value: "<<value <<endl;
 	char cmd[500];
 	sprintf(cmd, "bash /home/sirius/numexo_baseline.sh WRITE %s %s %s", board.data(), channel.data(), value.data());
 	system(cmd);
-board.clear();
-channel.clear();
-value.clear();
+	board.clear();
+	channel.clear();
+	value.clear();
 
 }
 
@@ -650,13 +730,14 @@ void execute_threshold_read(){
 	std::string board = convert_to_upper(user_entryBoard2);
 	std::string channel = convert_to_upper(user_entryChannel2);
 	std::string polarity = convert_to_upper2(command_th_polarity);
-	cout<<"Board: "<<board<<"  Channel: "<<channel<<"  Polarity: "<<polarity<<endl;
+	//	cout<<"Board: "<<board<<"  Channel: "<<channel<<"  Polarity: "<<polarity.data()<<endl;
 	char cmd[500];
 	sprintf(cmd, "bash /home/sirius/numexo_threshold.sh READ %s %s %s", board.data(), channel.data(), polarity.data());
+
 	system(cmd);
-board.clear();
-channel.clear();
-polarity.clear();
+	board.clear();
+	channel.clear();
+	polarity.clear();
 }
 
 
@@ -668,21 +749,73 @@ void execute_threshold_write(){
 	std::string channel = convert_to_upper(user_entryChannel2);
 	std::string value = convert_to_upper(user_entryValue2);
 	std::string polarity = convert_to_upper2(command_th_polarity);
-	cout<<"Board: "<<board<<"  Channel: "<<channel<<"  Polarity: "<<polarity<<" Value: "<<value <<endl;
+	//	cout<<"Board: "<<board<<"  Channel: "<<channel<<"  Polarity: "<<polarity.data()<<" Value: "<<value <<endl;
 	char cmd[500];
 	sprintf(cmd, "bash /home/sirius/numexo_threshold.sh WRITE %s %s %s %s", board.data(), channel.data(), polarity.data(), value.data());
+
 	system(cmd);
-board.clear();
-channel.clear();
-value.clear();
-polarity.clear();
+	board.clear();
+	channel.clear();
+	value.clear();
+	polarity.clear();
+}
+
+
+void execute_trigger_read_K(){
+	user_entryBoard3 = gtk_entry_get_text(GTK_ENTRY(user_entry_trigger_board));
+	std::string board = convert_to_upper(user_entryBoard3);
+	char cmd[500];
+	sprintf(cmd, "bash /home/sirius/triggerTrap_K_v6_config.sh READ %s", board.data());
+	system(cmd);
+	board.clear();
+}
+
+
+
+
+void execute_trigger_write_K(){
+	user_entryBoard3 = gtk_entry_get_text(GTK_ENTRY(user_entry_trigger_board));
+	user_entryValueK= gtk_entry_get_text(GTK_ENTRY(user_entry_trigger_value_K));
+	std::string board = convert_to_upper(user_entryBoard3);
+	std::string value = convert_to_upper(user_entryValueK);
+	//cout<<"Board: "<<board<<" K Value: "<<value <<endl;
+	char cmd[500];
+	sprintf(cmd, "bash /home/sirius/triggerTrap_K_v6_config.sh WRITE %s %s", board.data(),  value.data());
+	system(cmd);
+	board.clear();
+	value.clear();
+}
+
+void execute_trigger_read_M(){
+	user_entryBoard3 = gtk_entry_get_text(GTK_ENTRY(user_entry_trigger_board));
+	std::string board = convert_to_upper(user_entryBoard3);
+	char cmd[500];
+	sprintf(cmd, "bash /home/sirius/triggerTrap_M_v6_config.sh READ %s", board.data());
+	system(cmd);
+	board.clear();
+}
+
+
+
+
+void execute_trigger_write_M(){
+	user_entryBoard3 = gtk_entry_get_text(GTK_ENTRY(user_entry_trigger_board));
+	user_entryValueM= gtk_entry_get_text(GTK_ENTRY(user_entry_trigger_value_M));
+	std::string board = convert_to_upper(user_entryBoard3);
+	std::string value = convert_to_upper(user_entryValueM);
+	//cout<<"Board: "<<board<<" M Value: "<<value <<endl;
+	char cmd[500];
+	sprintf(cmd, "bash /home/sirius/triggerTrap_M_v6_config.sh WRITE %s %s", board.data(),  value.data());
+	system(cmd);
+	board.clear();
+	value.clear();
 }
 
 void execute_numexo2_reset(GtkWidget *wid,gpointer data){
-user_entryData = gtk_entry_get_text(GTK_ENTRY(data));
-std::string str1(user_entryData);
-	str1 = convert_to_upper2(str1);
-	cout<<"Resetting board(s): "<<RED<<str1<<RESET<<" | Acquision "<<GREEN<<command2<<RESET<<" |"<<endl;
+	user_entryData = gtk_entry_get_text(GTK_ENTRY(data));
+	std::string str1(user_entryData);
+	convert_to_upper2(str1);
+	cout<<BLUE<<"Resetting board(s): "<<RED<<str1<<RESET<<" | Acquision "<<GREEN<<command2<<RESET<<" |"<<endl;
 	char cmd[500];
 	std::string list = "";
 	if(boardList.size()==0)
@@ -751,25 +884,44 @@ std::string str1(user_entryData);
 			system(cmd);
 
 		}else{
-			cout<<"please enter a correct value from the number of active boards"<<endl;
-			for(int i = 0; i < boardList.size();i++) cout<<"board  "<<i<<" : "<<boardList[i]<<endl;
+			cout<<RED<<"Please enter a correct value from the list of active boards"<<RESET<<endl;
+			//cout<<"Active Boards : ";
+			//for(int i = 0; i < boardList.size();i++) cout<<boardList[i]<<" , ";
 		}
 
 	}
 }
 
+void execute_numexo2_config(GtkWidget *wid, gpointer data){
 
-void execute_numexo2_reboot(GtkWidget *wid,gpointer data){
-user_entryData = gtk_entry_get_text(GTK_ENTRY(data));
+	user_entryData = gtk_entry_get_text(GTK_ENTRY(data));
 	std::string str(user_entryData);
+
 	convert_to_upper(str);
-	cout<<"Rebooting board(s): "<<RED<<str<<RESET<<endl;
+	cout<<GREEN<<"Configuring board(s): "<<RED<<str<<RESET<<endl;
+	char cmd[500];
+	if(boardList.size()==0)
+		check_Boards_ONOFF_status2();
+	sprintf(cmd, "bash /home/sirius/configure_numexo_boards.sh %s", str.data() );
+	system(cmd);
+
+}
+
+
+
+void execute_numexo2_reboot(GtkWidget *wid, gpointer data){
+
+	user_entryData = gtk_entry_get_text(GTK_ENTRY(data));
+	std::string str(user_entryData);
+
+	convert_to_upper(str);
+	cout<<BLUE<<"Rebooting board(s): "<<RED<<str<<RESET<<endl;
 	std::string list = "";
 	char cmd[500];
 	if(boardList.size()==0)
 		check_Boards_ONOFF_status2();
 	if(str.compare("ALL") == 0){
-		sprintf(cmd, "csh /home/sirius/bin/numexo2_reboot.sh %s", boardList_str.c_str());
+		sprintf(cmd, "bash /home/sirius/bin/numexo2_reboot.sh %s", boardList_str.c_str());
 		system(cmd);
 	}
 	else if(str.compare("FRONT") == 0){
@@ -817,8 +969,9 @@ user_entryData = gtk_entry_get_text(GTK_ENTRY(data));
 			system(cmd);
 
 		}else{
-			cout<<"please enter a correct value from the number of active boards"<<endl;
-			for(int i = 0; i < boardList.size();i++) cout<<"board  "<<i<<" : "<<boardList[i]<<endl;
+			cout<<RED<<"Please enter a correct value from the list of active boards"<<RESET<<endl;
+			//cout<<"Active Boards : ";
+			//for(int i = 0; i < boardList.size();i++) cout<<boardList[i]<<" , ";
 		}
 
 	}
@@ -827,9 +980,10 @@ user_entryData = gtk_entry_get_text(GTK_ENTRY(data));
 
 
 void execute_Tmux_open(){
-	system("csh /home/sirius/launch_tmux_TelnetViewer.csh");
+	char cmd[400];
+	sprintf(cmd, "csh /home/sirius/launch_tmux_TelnetViewer.csh %s", command_tmux_window_choice.c_str());
+	system(cmd);
 }
-
 
 void execute_Tmux_close(){
 	system("bash /home/sirius/quit_tmux_TelnetViewer.sh");
@@ -844,7 +998,7 @@ void execute_Temp_Draw(){
 		system(command);
 	}
 	else
-		std::cout<<"Select the unit from the drop-down list....\n";
+		std::cout<<GREEN<<"Select the unit from the drop-down list....\n"<<RESET;
 }
 
 void execute_Temp_Kill(){
@@ -859,7 +1013,7 @@ void execute_Data_Draw(){
 		system(command);
 	}
 	else
-		std::cout<<"Select the unit from the drop-down list....\n";
+		std::cout<<GREEN<<"Select the unit from the drop-down list....\n"<<RESET;
 }
 
 void execute_Data_Kill(){
@@ -871,23 +1025,28 @@ void execute_numexo2_TempGet(GtkWidget *wid,gpointer data){
 	user_entryData2 = gtk_entry_get_text(GTK_ENTRY(data));
 	std::string str(user_entryData2);
 
-	if((str.compare("ALL") == 0) || (str.compare("*") == 0)){
-		system("/home/sirius/bin/numexo2_temperature.sh");
-	}
+	if(boardList.size()==0)
+		cout<<BLUE<<"Please First Execute the"<<RED<<" Boards ON/OFF Status "<<BLUE<<"Necessary Check"<<RESET<<endl;
 	else{
-		char command[400];
-		char *ptr;
-		int bid;
-		bid = (int) strtol(str.c_str(), &ptr, 10);
-		if(check_board_is_online(bid)){
-			sprintf(command, "bash /home/sirius/bin/numexo2_temperature.sh %s", str.c_str());
-			system(command);  
+		if((str.compare("ALL") == 0) || (str.compare("*") == 0)){
+			system("/home/sirius/bin/numexo2_temperature.sh");
 		}
 		else{
-			cout<<"please enter a correct value from the number of active boards"<<endl;
-			for(int i = 0; i < boardList.size();i++) cout<<"board  "<<i<<" : "<<boardList[i]<<endl;
-		}
+			char command[400];
+			char *ptr;
+			int bid;
+			bid = (int) strtol(str.c_str(), &ptr, 10);
+			if(check_board_is_online(bid)){
+				sprintf(command, "bash /home/sirius/bin/numexo2_temperature.sh %s", str.c_str());
+				system(command);  
+			}
+			else{
+				cout<<RED<<"Please enter a correct value from the list of active boards"<<RESET<<endl;
+				//cout<<BLUE<<"Active boards: "<<RESET<<endl;
+				//for(int i = 0; i < boardList.size();i++) cout<<boardList[i]<<" , "<<endl;
+			}
 
+		}
 	}
 }
 void misc_func_selected(GtkWidget *widget, gpointer window) 
@@ -897,7 +1056,7 @@ void misc_func_selected(GtkWidget *widget, gpointer window)
 	std::string str(text);
 	command_misc_func = str;
 	g_free(text);
-        str.clear();
+	str.clear();
 }
 
 void init_func_selected(GtkWidget *widget, gpointer window) 
@@ -907,7 +1066,7 @@ void init_func_selected(GtkWidget *widget, gpointer window)
 	std::string str(text);
 	command_init_func = str;
 	g_free(text);
-        str.clear();
+	str.clear();
 }
 
 void th_polarity_selected(GtkWidget *widget, gpointer window){
@@ -916,7 +1075,7 @@ void th_polarity_selected(GtkWidget *widget, gpointer window){
 	std::string str(text);
 	command_th_polarity = str;
 	g_free(text);
-        str.clear();
+	str.clear();
 
 }
 
@@ -928,7 +1087,7 @@ void acq_state_selected(GtkWidget *widget, gpointer window) {
 	std::string str(text);
 	command2 = str;
 	g_free(text);
-        str.clear();
+	str.clear();
 }
 
 void comboTemp_selected(GtkWidget *widget, gpointer window) {
@@ -938,7 +1097,7 @@ void comboTemp_selected(GtkWidget *widget, gpointer window) {
 	std::string str(text);
 	commandTempUnit = str;
 	g_free(text);
-str.clear();
+	str.clear();
 }
 
 void comboCal_Data_selected(GtkWidget *widget, gpointer window) {
@@ -948,7 +1107,7 @@ void comboCal_Data_selected(GtkWidget *widget, gpointer window) {
 	std::string str(text);
 	commandCalDataUnit = str;
 	g_free(text);
-        str.clear();
+	str.clear();
 }
 
 void comboAnimation_Data_selected(GtkWidget *widget, gpointer window) {
@@ -958,7 +1117,7 @@ void comboAnimation_Data_selected(GtkWidget *widget, gpointer window) {
 	std::string str(text);
 	commandAnimationDataUnit = str;
 	g_free(text);
-        str.clear();
+	str.clear();
 }
 
 void comboDetector_Data_selected(GtkWidget *widget, gpointer window) {
@@ -968,7 +1127,7 @@ void comboDetector_Data_selected(GtkWidget *widget, gpointer window) {
 	std::string str(text);
 	commandDetectorData = str;
 	g_free(text);
-        str.clear();
+	str.clear();
 }
 void check_Boards_ONOFF_status2(){
 	get_nActiveBoards();
@@ -978,7 +1137,7 @@ void check_Boards_ONOFF_status2(){
 	std::vector<int> temp;
 	int board;
 	std::ifstream file; std::string side; char separator;
-	file.open("/home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/ConfigFiles/numexo2Boards.config", std::ifstream::in);
+	file.open("/home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/ConfigFiles/numexo2Boards.config", std::ifstream::in);
 	if(file.is_open()){
 		while(!file.eof()){
 			file >> side >> separator >> board;
@@ -987,6 +1146,7 @@ void check_Boards_ONOFF_status2(){
 			std::pair<int, bool> a(board, 0);
 
 			boardList_check.insert(a);
+			boardTypeList.push_back(side);
 			if(side.compare("FRONT")==0)boardList_DSSD_front.push_back(board);
 			else if(side.compare("BACK")==0)boardList_DSSD_back.push_back(board);
 			else if(side.compare("TUNNEL")==0)boardList_TUNNEL.push_back(board);
@@ -998,7 +1158,7 @@ void check_Boards_ONOFF_status2(){
 		cerr<<"numexo2 Board list file does not exist or cannot be opened...."<<endl;
 	} 
 
-	if(boardList.size() == 0) std::cout<<"no Numexo2 boards is online.."<<std::endl;
+	if(boardList.size() == 0) std::cout<<RED<<"no Numexo2 boards is online.."<<RESET<<std::endl;
 
 	if(boardList.size() >0 && boardList_check.size() > 0){
 		//list of active boards
@@ -1007,11 +1167,11 @@ void check_Boards_ONOFF_status2(){
 		}
 
 		//compare
-		int i =0;
-		for(int i = 0; i < temp.size(); i++){
-			for(size_t j = 0; j < temp_check.size(); j++){
+		//int i =0;
+		for(size_t j = 0; j < temp_check.size(); j++){
+			for(int i = 0; i < temp.size(); i++){
 				if(temp.at(i) == temp_check.at(j)){
-					boardList_check[temp.at(i)] = true;
+					boardList_check[temp_check.at(j)] = true;
 					break;
 				}
 
@@ -1035,7 +1195,7 @@ void check_Boards_ONOFF_status(){
 	std::vector<int> temp;
 	int board;
 	std::ifstream file; std::string side; char separator;
-	file.open("/home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUser-build/ConfigFiles/numexo2Boards.config", std::ifstream::in);
+	file.open("/home/sirius/ganacq_manip/test/GRU_SIRIUS/GUser-build/ConfigFiles/numexo2Boards.config", std::ifstream::in);
 	if(file.is_open()){
 		while(!file.eof()){
 			file >> side >> separator >> board;
@@ -1045,6 +1205,7 @@ void check_Boards_ONOFF_status(){
 
 			boardList_check.insert(a);
 
+			boardTypeList.push_back(side);
 			if(side.compare("FRONT")==0)boardList_DSSD_front.push_back(board);
 			else if(side.compare("BACK")==0)boardList_DSSD_back.push_back(board);
 			else if(side.compare("TUNNEL")==0)boardList_TUNNEL.push_back(board);
@@ -1056,7 +1217,7 @@ void check_Boards_ONOFF_status(){
 		cerr<<"numexo2 Board list file does not exist or cannot be opened...."<<endl;
 	} 
 
-	if(boardList.size() == 0) std::cout<<"no Numexo2 boards is online.."<<std::endl;
+	if(boardList.size() == 0) std::cout<<RED<<"no Numexo2 boards is online.."<<RESET<<std::endl;
 
 	if(boardList.size() >0 && boardList_check.size() > 0){
 		//list of active boards
@@ -1065,11 +1226,11 @@ void check_Boards_ONOFF_status(){
 		}
 
 		//compare
-		int i =0;
-		for(int i = 0; i < temp.size(); i++){
-			for(size_t j = 0; j < temp_check.size(); j++){
+		//	int i =0;
+		for(size_t j = 0; j < temp_check.size(); j++){
+			for(int i = 0; i < temp.size(); i++){
 				if(temp.at(i) == temp_check.at(j)){
-					boardList_check[temp.at(i)] = true;
+					boardList_check[temp_check.at(j)] = true;
 					break;
 				}
 
@@ -1136,6 +1297,17 @@ void get_nActiveBoards(){
 
 }
 
+
+void comboTmux_window_selected(GtkWidget *widget, gpointer window) {
+
+	gchar *text = gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget));
+	gtk_label_set_text(GTK_LABEL(window), text);
+	std::string str(text);
+	command_tmux_window_choice = str;
+	g_free(text);
+	str.clear();
+}
+
 void display_about( GtkWidget*widget, gpointer data ){
 	GError *error = NULL;
 
@@ -1159,77 +1331,37 @@ void display_about( GtkWidget*widget, gpointer data ){
 }
 
 
-void show_help(){
+void show_help(GtkWidget*widget, gpointer window){
+
+	const gchar* message_format = "Necassary Chack\n-->Boards ON/OFF Status: This check must be performed first. It shows whether all the boards listed in <<Board Config file>> are ON or OFF.\n-->Open Board config file: To edit the <<Board Config file>>. The format must be preserved. This file is read in several places in the program.\n-->Network Readiness: To check whether the boards are ready for initialization.\n\nSetup Initialization\n-->Setup GTS: To align the GTS tree.\n-->Configure Numexo2 boards: To initialize basaline, threshold and other registers.\n--Auto initialization: It performs the above two operations sequentially.\n\nMiscellaneous functions\n-->Ping Network: To test the various connected IP addresses in the Network.\n-->Scan Network: To see who is who and their status.\n-->Show Driver State: To see the Narval actor state.\n-->Show Firmware versions: To check the versions of the firmwares installed in the boards.\n-->Show Embaded Software version: To see the embadded software installed in V5.\n-->Show Narval State: To check the status of Narval.\n\nReset Numexo2\n-->Reset Numexo2: To reset the Numexo2 boards. This is required to bring the baseline to 0 value. Very essential for proper functiong of the thresholds set for each boards.\n-->You can Enter Board numbers in formats like: 65,66,67 or ALL or Front or Back (Note the entry is case insensitive).\n--Chose the state of the Acquisition as the commands are different for ON and OFF state.\nBaseline\n--Baseline: To read and write the baseline of the numexo2 boards.\n--You can Enter Board numbers in formats like: 65,66,67 or 64-70 or ALL or DSSD/Front/Back/Tunnel (Note the entry is case insensitive).\n-->You can Enter Channel numbers in formats like: 1,10,16 or 1-4 or ALL (Note the entry is case insensitive).\n-->Chose whether to read or write. For writing you must give in Hexadecimal format 0x.....\n\nThreshold\n-->Threshold: To read and write the threshold levels of the numexo2 boards.\n-->You can Enter Board numbers in formats like: 65,66,67 or 64-70 or ALL or DSSD/Front/Back/Tunnel(Note the entry is case insensitive).\n-->You can Enter Channel numbers in formats like: 1,10,16 or 1-4 or ALL (Note the entry is case insensitive).\n-->Chose the Polarity of the threshold.\n-->Read: To read the values for the chosen boards and channels\n-->Write: To write the value provided in Hexadecimal format 0x..... to the chosen boards and channels.\n\nTelnet Viewer\n-->Open: To view the real time flow of data for different boards.\n-->Close: To close the telnet viewer session.\n\nTemperature of Numexo2\n-->Measure: To see the temeratue of vertex5 and vertex6 of the numexo2 boards.\n-->You can enter ALL or by board numbers 65,70,....\n\nTemperature as a function of time\n-->Draw: To view graphically the temeratue of vertex5 and vertex6 of the numexo2 boards.\n-->Close: To kill the graphical viewer.\n\nGRU\n-->Open Configuration file: To edit/view the configurations set for Online/Offline analysis.\n-->Launch: To launch the GruScript.\n-->Kill: If you want to kill.\n\nVIGRU\n-->Launch: To launch Vigru.\n\nGUser\n-->Open Workspace: To edit/view the GUser header and source files.\n-->Clean Make: To do clean Make.\n-->Make: To Make.\n ";
+	GtkWidget *dialog;
+	dialog = gtk_message_dialog_new(GTK_WINDOW(window),
+			GTK_DIALOG_DESTROY_WITH_PARENT,
+			GTK_MESSAGE_INFO,
+			GTK_BUTTONS_CLOSE,
+			message_format);
+	// gtk_widget_set_size_request (dialog, 800, 600);
+
+	/*GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+
+	  gtk_container_add (GTK_CONTAINER (scrolled_window),
+	  dialog);
 
 
-	cout<<"=================================Necassary Chack===================================\n";
-	cout<<"--Boards ON/OFF Status: This check must be performed first. It shows whether all the boards listed in <<Board Config file>> are ON or OFF.\n";
-	cout<<"--Open Board config file: To edit the <<Board Config file>>. The format must be preserved. This file is read in several places in the program.\n";
-	cout<<"--Network Readiness: To check whether the boards are ready for initialization.\n";
-
-	cout<<"=================================Setup Initialization===================================\n";
-	cout<<"--Configure Numexo2 boards: To initialize basaline, threshold and other registers.\n";
-	cout<<"--Setup GTS: To align the GTS tree.\n";
-	cout<<"--Auto initialization: It performs the above two operations sequentially.\n";
 
 
-	cout<<"=================================Miscellaneous functions===================================\n";
-	cout<<"--Ping Network: To test the various connected IP addresses in the Network.\n";
-	cout<<"--Scan Network: To see who is who and their status.\n";
-	cout<<"--Show Driver State: To see the Narval actor state.\n";
-	cout<<"--Show Firmware versions: To check the versions of the firmwares installed in the boards.\n";
-	cout<<"--Show Embaded Software version: To see the embadded software installed in V5.\n";
-	cout<<"--Show Narval State: To check the status of Narval.\n";
-
-	cout<<"=================================Reset Numexo2===================================\n";
-	cout<<"--Reset Numexo2: To reset the Numexo2 boards. This is required to bring the baseline to 0 value. Very essential for proper functiong of the thresholds set for each boards.\n";
-	cout<<"--You can Enter Board numbers in formats like: 65,66,67 or ALL or Front or Back (Note the entry is case insensitive).\n";
-	cout<<"--Chose the state of the Acquisition as the commands are different for ON and OFF state.\n";
+*/
 
 
-	cout<<"=================================Baseline===================================\n";
-	cout<<"--Baseline: To read and write the baseline of the numexo2 boards.\n";
-	cout<<"--You can Enter Board numbers in formats like: 65,66,67 or 64-70 or ALL or DSSD/Front/Back/Tunnel (Note the entry is case insensitive).\n";
-	cout<<"--You can Enter Channel numbers in formats like: 1,10,16 or 1-4 or ALL (Note the entry is case insensitive).\n";
-	cout<<"--Chose whether to read or write. For writing you must give in Hexadecimal format 0x.....\n";
+	gtk_window_set_title(GTK_WINDOW(dialog), "Information");
 
 
-	cout<<"=================================Threshold===================================\n";
-	cout<<"--Threshold: To read and write the threshold levels of the numexo2 boards.\n";
-	cout<<"--You can Enter Board numbers in formats like: 65,66,67 or 64-70 or ALL or DSSD/Front/Back/Tunnel (Note the entry is case insensitive).\n";
-	cout<<"--You can Enter Channel numbers in formats like: 1,10,16 or 1-4 or ALL (Note the entry is case insensitive).\n";
-	cout<<"--Chose the Polarity of the threshold.\n";
-	cout<<"--Read: To read the values for the chosen boards and channels\n";
-	cout<<"--Write: To write the value provided in Hexadecimal format 0x..... to the chosen boards and channels.\n";
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
 
-	cout<<"=================================Telnet Viewer===================================\n";
-	cout<<"--Open: To view the real time flow of data for different boards.\n";
-	cout<<"--Close: To close the telnet viewer session.\n";
-
-
-	cout<<"=================================Temperature of Numexo2===================================\n";
-	cout<<"--Measure: To see the temeratue of vertex5 and vertex6 of the numexo2 boards.\n";
-	cout<<"--You can enter ALL or by board numbers 65,70,....\n";
-
-	cout<<"=================================Temperature as a function of time===================================\n";
-	cout<<"--Draw: To view graphically the temeratue of vertex5 and vertex6 of the numexo2 boards.\n";
-	cout<<"--Close: To kill the graphical viewer.\n";
-
-	cout<<"=================================GRU===================================\n";
-	cout<<"--Open Configuration file: To edit/view the configurations set for Online/Offline analysis.\n";
-	cout<<"--Launch: To launch the GruScript.\n";
-	cout<<"--Kill: If you want to kill.\n";
-
-	cout<<"=================================VIGRU===================================\n";
-	cout<<"--Launch: To launch Vigru.\n";
-
-	cout<<"=================================GUser===================================\n";
-	cout<<"--Open Workspace: To edit/view the GUser header and source files.\n";
-	cout<<"--Cmake: To do Cmake of the source codes.\n";
-	cout<<"--Clean Make: To do clean Make.\n";
-	cout<<"--Make: To Make.\n";
 
 }
+
 
 
 int main(int argc, char *argv[]) {
@@ -1267,6 +1399,20 @@ int main(int argc, char *argv[]) {
 	GtkWidget *button_configBoard;
 	GtkWidget *button_gets;
 	GtkWidget *button_configAuto;
+
+	//-----------------------------
+	// Get Setup initialization section
+	// ----------------------------
+	GtkWidget *hboxInit2;//horizontal box for init section
+	GtkWidget *labelInit2;//label for this section
+	GtkWidget *button_beast_server;
+	GtkWidget *button_Ecc_server;
+	GtkWidget *button_beast_matrix;
+	GtkWidget *button_usb;
+	GtkWidget *button_kill_get;
+
+
+
 	//-------------------------
 	// Misc. function section
 	// ------------------------
@@ -1283,6 +1429,15 @@ int main(int argc, char *argv[]) {
 	GtkWidget *labelReboot;//
 	GtkWidget *labelReboot2;//Numexo board number
 	GtkWidget *button_reboot;// ok button to execute
+	//---------------------------------
+	// Configure Numexo2 boards section
+	//----------------------------------
+	GtkWidget *hboxConfig;//horizontal box for this section
+	GtkWidget *user_entry_config_board;// user entry for the board number to be reset
+	GtkWidget *labelConfig;//
+	GtkWidget *labelConfig2;//Numexo board number
+	GtkWidget *button_config;// ok button to execute
+
 
 	//---------------------------------
 	// Reset Numexo2 boards section
@@ -1317,12 +1472,27 @@ int main(int argc, char *argv[]) {
 	GtkWidget *combo_th;//th polarity
 	GtkWidget *button_threshold_read;
 	GtkWidget *button_threshold_write;
+	//---------------------------------
+	// Trigger
+	//----------------------------------
+	GtkWidget *hboxTrigger;//horizontal box for this section
+	GtkWidget *labelTrigger;//
+	GtkWidget *labelBoard_trigger;//
+	GtkWidget *button_trigger_read_K;
+	GtkWidget *button_trigger_write_K;
+	GtkWidget *button_trigger_read_M;
+	GtkWidget *button_trigger_write_M;
+
+	GtkWidget* labelTrigger_K;
+	GtkWidget* labelTrigger_M;
 
 	//----------------------
 	// Telnet viewer section
 	//-----------------------
 	GtkWidget *hboxTmux;//horizontal box for thi section
 	GtkWidget *labelTmux;//label for this section
+	GtkWidget *label_tmux_window;
+	GtkWidget *combo_tmux;
 	GtkWidget *button_Tmux_open;//button to open the telnet viewer using Tmux
 	GtkWidget *button_Tmux_close;// button for closing the tumux session
 	//----------------------------------
@@ -1360,26 +1530,42 @@ int main(int argc, char *argv[]) {
 	GtkWidget *button_Data_Kill;
 
 	//-----------------
-	// GRU
+	// GRU 1
 	//----------------
-	GtkWidget *hbox_gru;
-	GtkWidget *label_gru;
-	GtkWidget *button_gru_config;
-	GtkWidget *button_gru_launch;
-	GtkWidget *button_gru_kill;
+	GtkWidget *hbox_gru1;
+	GtkWidget *label_gru1;
+	GtkWidget *button_gru_config1;
+	GtkWidget *button_gru_launch1;
+	GtkWidget *button_gru_kill1;
 	//-----------------
-	// VIGRU
+	// VIGRU 1
 	//----------------
-	GtkWidget *hbox_vigru;
-	GtkWidget *label_vigru;
-	GtkWidget *button_vigru_launch;
+	GtkWidget *hbox_vigru1;
+	GtkWidget *label_vigru1;
+	GtkWidget *button_vigru_launch1;
+
+	//-----------------
+	// GRU 2
+	//----------------
+	GtkWidget *hbox_gru2;
+	GtkWidget *label_gru2;
+	GtkWidget *button_gru_config2;
+	GtkWidget *button_gru_launch2;
+	GtkWidget *button_gru_kill2;
+	//-----------------
+	// VIGRU 2
+	//----------------
+	GtkWidget *hbox_vigru2;
+	GtkWidget *label_vigru2;
+	GtkWidget *button_vigru_launch2;
+
 
 	//-----------------
 	// GUser
 	//----------------
 	GtkWidget *hbox_guser;
 	GtkWidget *label_guser;
-        GtkWidget *button_guser_documentation;
+	GtkWidget *button_guser_documentation;
 	GtkWidget *button_guser_workspace;
 	GtkWidget *button_guser_cmake;
 	GtkWidget *button_guser_cleanmake;
@@ -1393,6 +1579,7 @@ int main(int argc, char *argv[]) {
 	// gtk init
 	// --------------------
 	gtk_init(&argc, &argv);
+	mother_pid = getppid();
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "Exp@Sirius");
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
@@ -1405,7 +1592,7 @@ int main(int argc, char *argv[]) {
 	//------------------
 	//init verical boxes
 	//------------
-	vbox = gtk_vbox_new(FALSE, 30);
+	vbox = gtk_vbox_new(FALSE, 20);
 	//get the list of active boards
 	//get_nActiveBoards();
 	//check_Boards_ONOFF_status();
@@ -1416,7 +1603,7 @@ int main(int argc, char *argv[]) {
 	hboxIntro2 = gtk_hbox_new(FALSE, 10);
 	//ganil logo	
 	GError *error = NULL;
-	GdkPixbuf *pix_buf = gdk_pixbuf_new_from_file_at_scale("/home/sirius/Chakma/Gru_dev/GRU_SIRIUS/GUI_SiriusControlApp/ganillogo.png", 150,50, TRUE, &error);
+	GdkPixbuf *pix_buf = gdk_pixbuf_new_from_file_at_scale("/home/sirius/ganacq_manip/test/GRU_SIRIUS/GUI_SiriusControlApp/ganillogo.png", 150,50, TRUE, &error);
 	if (pix_buf == NULL) {
 		g_printerr ("Error loading file: #%d %s\n", error->code, error->message);
 		g_error_free (error);
@@ -1444,8 +1631,8 @@ int main(int argc, char *argv[]) {
 	button_help = gtk_button_new_with_label ("Help");
 	gtk_widget_set_size_request(button_help, 70, 30 );
 	gtk_box_pack_start(GTK_BOX(hboxIntro2), button_help, TRUE, TRUE, 0);
-	g_signal_connect (G_OBJECT(button_help), "button-press-event",
-			G_CALLBACK(show_help), NULL);
+	g_signal_connect (G_OBJECT(button_help), "clicked",
+			G_CALLBACK(show_help), (gpointer)window);
 
 
 	gtk_box_pack_start(GTK_BOX(hboxIntro), hboxIntro2, TRUE, TRUE, 0);
@@ -1482,6 +1669,63 @@ int main(int argc, char *argv[]) {
 	halign = gtk_alignment_new(1, 1, 1, 1);
 	gtk_container_add(GTK_CONTAINER(halign), hboxCheck);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
+
+
+
+	//-----------------------------------
+	// Get Initialization section
+	// ---------------------------------
+	hboxInit2 = gtk_hbox_new(FALSE, 10);
+	//functionality label	
+	labelInit2 = gtk_label_new("Launch GET System");
+	gtk_box_pack_start(GTK_BOX(hboxInit2), labelInit2, TRUE, TRUE, 0);
+
+	button_beast_server = gtk_button_new_with_label ("GTS Server BEAST");
+	gtk_widget_set_size_request(button_beast_server, 70, 30 );
+	g_signal_connect (G_OBJECT(button_beast_server), "clicked",
+			G_CALLBACK(execute_beast_server), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxInit2), button_beast_server, TRUE, TRUE, 0);
+
+
+	button_beast_matrix = gtk_button_new_with_label ("BEAST Matrix loop");
+	gtk_widget_set_size_request(button_beast_matrix, 70, 30 );
+	g_signal_connect (G_OBJECT(button_beast_matrix), "clicked",
+			G_CALLBACK(execute_beast_matrix), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxInit2), button_beast_matrix, TRUE, TRUE, 0);
+
+
+	button_Ecc_server = gtk_button_new_with_label ("Ecc Soap Server");
+	gtk_widget_set_size_request(button_Ecc_server, 70, 30 );
+	g_signal_connect (G_OBJECT(button_Ecc_server), "clicked",
+			G_CALLBACK(execute_Ecc_server), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxInit2), button_Ecc_server, TRUE, TRUE, 0);
+
+	button_usb= gtk_button_new_with_label ("USB Console");
+	gtk_widget_set_size_request(button_usb, 70, 30 );
+	g_signal_connect (G_OBJECT(button_usb), "clicked",
+			G_CALLBACK(execute_usb), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxInit2), button_usb, TRUE, TRUE, 0);
+
+	button_kill_get= gtk_button_new_with_label ("Close");
+	gtk_widget_set_size_request(button_kill_get, 70, 30 );
+	g_signal_connect (G_OBJECT(button_kill_get), "clicked",
+			G_CALLBACK(execute_get_kill), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxInit2), button_kill_get, TRUE, TRUE, 0);
+
+
+
+
+	//position
+	halign = gtk_alignment_new(1, 1, 1, 1);
+	gtk_container_add(GTK_CONTAINER(halign), hboxInit2);
+	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
+
+
+
+
+
 	//-----------------------------------
 	// Numexo2 Initialization section
 	// ---------------------------------
@@ -1512,6 +1756,11 @@ int main(int argc, char *argv[]) {
 	halign = gtk_alignment_new(1, 1, 1, 1);
 	gtk_container_add(GTK_CONTAINER(halign), hboxInit);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
+
+
+
+
 	//-----------------------------------
 	//Misc. function section
 	//--------------------------------------	
@@ -1559,10 +1808,10 @@ int main(int argc, char *argv[]) {
 	labelReboot2 = gtk_label_new("Board");
 	gtk_box_pack_start(GTK_BOX(hboxReboot), labelReboot2, TRUE, TRUE, 0);
 	// user entry
-	user_entry_reset_board = gtk_entry_new();
-	//user_entryData = gtk_entry_get_text(GTK_ENTRY(user_entry_reset_board));
-	//gtk_entry_set_placeholder_text(GTK_ENTRY(user_entry_reset_board),"ALL"); //only available in gtk3+
-	gtk_box_pack_start(GTK_BOX(hboxReboot), user_entry_reset_board, TRUE, TRUE, 0);
+	user_entry_reboot_board = gtk_entry_new();
+	//user_entryData = gtk_entry_get_text(GTK_ENTRY(user_entry_reboot_board));
+	//gtk_entry_set_placeholder_text(GTK_ENTRY(user_entry_reboot_board),"ALL"); //only available in gtk3+
+	gtk_box_pack_start(GTK_BOX(hboxReboot), user_entry_reboot_board, TRUE, TRUE, 0);
 
 	// button reboot numexo
 	button_reboot = gtk_button_new_with_label("Reboot");
@@ -1573,6 +1822,33 @@ int main(int argc, char *argv[]) {
 	//position the button
 	halign = gtk_alignment_new(1, 1, 1, 1);
 	gtk_container_add(GTK_CONTAINER(halign), hboxReboot);
+	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
+
+	//-------------------------------------
+	// Config the numexos section
+	//---------------------------------
+	hboxConfig = gtk_hbox_new(FALSE, 10);
+	// label Numexo
+	labelConfig = gtk_label_new("Configure Registers for");
+	gtk_box_pack_start(GTK_BOX(hboxConfig), labelConfig, TRUE, TRUE, 0);
+	labelConfig2 = gtk_label_new("Board");
+	gtk_box_pack_start(GTK_BOX(hboxConfig), labelConfig2, TRUE, TRUE, 0);
+	// user entry
+	user_entry_config_board = gtk_entry_new();
+	//user_entryData = gtk_entry_get_text(GTK_ENTRY(user_entry_config_board));
+	//gtk_entry_set_placeholder_text(GTK_ENTRY(user_entry_config_board),"ALL"); //only available in gtk3+
+	gtk_box_pack_start(GTK_BOX(hboxConfig), user_entry_config_board, TRUE, TRUE, 0);
+
+	// button reboot numexo
+	button_config = gtk_button_new_with_label("ok");
+	gtk_widget_set_size_request(button_config, 70, 30 );
+	g_signal_connect (G_OBJECT(button_config), "clicked",
+			G_CALLBACK(execute_numexo2_config), (gpointer) user_entry_config_board);
+	gtk_box_pack_start(GTK_BOX(hboxConfig), button_config, TRUE, TRUE, 0);
+	//position the button
+	halign = gtk_alignment_new(1, 1, 1, 1);
+	gtk_container_add(GTK_CONTAINER(halign), hboxConfig);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
 
 
@@ -1713,12 +1989,78 @@ int main(int argc, char *argv[]) {
 	gtk_container_add(GTK_CONTAINER(halign), hboxThreshold);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
 
+	//------------
+	// Trigger
+	// -----------
+	hboxTrigger = gtk_hbox_new(FALSE,10);
+	labelTrigger= gtk_label_new("Trigger");
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), labelTrigger, TRUE, TRUE, 0);
+	labelBoard_trigger= gtk_label_new("Board");
+
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), labelBoard_trigger, TRUE, TRUE, 0);
+	//
+	user_entry_trigger_board= gtk_entry_new();
+
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), user_entry_trigger_board, TRUE, TRUE, 0);
+
+
+	//-----------K--------------
+	//
+	labelTrigger_K= gtk_label_new("K");
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), labelTrigger_K, TRUE, TRUE, 0);
+	button_trigger_read_K= gtk_button_new_with_label("Read");
+	gtk_widget_set_size_request(button_trigger_read_K, 70, 30 );
+	g_signal_connect (G_OBJECT(button_trigger_read_K), "clicked",
+			G_CALLBACK(execute_trigger_read_K), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), button_trigger_read_K, TRUE, TRUE, 0);
+
+	button_trigger_write_K= gtk_button_new_with_label("Write");
+	gtk_widget_set_size_request(button_trigger_write_K, 70, 30 );
+	g_signal_connect (G_OBJECT(button_trigger_write_K), "clicked",
+			G_CALLBACK(execute_trigger_write_K), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), button_trigger_write_K, TRUE, TRUE, 0);
+
+	user_entry_trigger_value_K= gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), user_entry_trigger_value_K, TRUE, TRUE, 0);
+
+	//----------M---------
+	labelTrigger_M= gtk_label_new("M");
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), labelTrigger_M, TRUE, TRUE, 0);
+	button_trigger_read_M= gtk_button_new_with_label("Read");
+	gtk_widget_set_size_request(button_trigger_read_M, 70, 30 );
+	g_signal_connect (G_OBJECT(button_trigger_read_M), "clicked",
+			G_CALLBACK(execute_trigger_read_M), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), button_trigger_read_M, TRUE, TRUE, 0);
+
+	button_trigger_write_M= gtk_button_new_with_label("Write");
+	gtk_widget_set_size_request(button_trigger_write_M, 70, 30 );
+	g_signal_connect (G_OBJECT(button_trigger_write_M), "clicked",
+			G_CALLBACK(execute_trigger_write_M), NULL);
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), button_trigger_write_M, TRUE, TRUE, 0);
+
+	user_entry_trigger_value_M= gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(hboxTrigger), user_entry_trigger_value_M, TRUE, TRUE, 0);
+
+	//position the button
+	halign = gtk_alignment_new(1, 1, 1, 1);
+	gtk_container_add(GTK_CONTAINER(halign), hboxTrigger);
+	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
 	//------------------------
 	// Telnet viewer
 	//-----------------------
 	hboxTmux = gtk_hbox_new(FALSE, 10);
 	labelTmux = gtk_label_new("Telnet Viewer");
 	gtk_box_pack_start(GTK_BOX(hboxTmux), labelTmux, TRUE, TRUE, 0);
+
+	// List of units
+	label_tmux_window = gtk_label_new("");
+	combo_tmux = gtk_combo_box_new_text();
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo_tmux), "DSSD");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo_tmux), "TUNNEL+EXOGAM");
+	gtk_box_pack_start(GTK_BOX(hboxTmux),combo_tmux ,TRUE, TRUE, 0);
+	//to select from the list
+	g_signal_connect(G_OBJECT(combo_tmux), "changed", G_CALLBACK(comboTmux_window_selected), (gpointer) label_tmux_window);
 	// open Tmux viewer
 	button_Tmux_open = gtk_button_new_with_label("Open");
 	gtk_widget_set_size_request(button_Tmux_open, 70, 30 );
@@ -1735,6 +2077,7 @@ int main(int argc, char *argv[]) {
 	halign = gtk_alignment_new(1, 1, 1, 1);
 	gtk_container_add(GTK_CONTAINER(halign), hboxTmux);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
 	//------------------------
 	// Get Temp numexos
 	//-----------------------
@@ -1875,54 +2218,102 @@ int main(int argc, char *argv[]) {
 	gtk_container_add(GTK_CONTAINER(halign), hboxData_gr);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
 
-
-
 	//-----------------
-	// GRU
+	// GRU 1
 	//----------------
-	hbox_gru= gtk_hbox_new(FALSE, 10);
-	label_gru = gtk_label_new("GRU"); 
-	gtk_box_pack_start(GTK_BOX(hbox_gru), label_gru, TRUE, TRUE, 0);
+	hbox_gru1= gtk_hbox_new(FALSE, 10);
+	label_gru1 = gtk_label_new("GRU Online"); 
+	gtk_box_pack_start(GTK_BOX(hbox_gru1), label_gru1, TRUE, TRUE, 0);
 
 
-	button_gru_config =gtk_button_new_with_label("Open Configuration file");
-	g_signal_connect(G_OBJECT(button_gru_config), "clicked", 
-			G_CALLBACK(open_gru_config), NULL);
-	gtk_box_pack_start (GTK_BOX (hbox_gru), button_gru_config, TRUE, TRUE, 0);
+	button_gru_config1 =gtk_button_new_with_label("Open Configuration file Online");
+	g_signal_connect(G_OBJECT(button_gru_config1), "clicked", 
+			G_CALLBACK(open_gru_config1), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_gru1), button_gru_config1, TRUE, TRUE, 0);
 
-	button_gru_launch = gtk_button_new_with_label("Launch");
-	g_signal_connect(G_OBJECT(button_gru_launch), "clicked", 
-			G_CALLBACK(perform_gru_launch), NULL);
-	gtk_box_pack_start (GTK_BOX (hbox_gru), button_gru_launch, TRUE, TRUE, 0);
+	button_gru_launch1 = gtk_button_new_with_label("Launch");
+	g_signal_connect(G_OBJECT(button_gru_launch1), "clicked", 
+			G_CALLBACK(perform_gru_launch1), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_gru1), button_gru_launch1, TRUE, TRUE, 0);
 
 
-	button_gru_kill= gtk_button_new_with_label("Kill");
-	g_signal_connect(G_OBJECT(button_gru_kill), "clicked", 
-			G_CALLBACK(kill_gru), NULL);
-	gtk_box_pack_start (GTK_BOX (hbox_gru), button_gru_kill, TRUE, TRUE, 0);
+	button_gru_kill1= gtk_button_new_with_label("Kill");
+	g_signal_connect(G_OBJECT(button_gru_kill1), "clicked", 
+			G_CALLBACK(kill_gru1), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_gru1), button_gru_kill1, TRUE, TRUE, 0);
 
 	//position the box
 	halign = gtk_alignment_new(1, 1, 1, 1);
-	gtk_container_add(GTK_CONTAINER(halign), hbox_gru);
+	gtk_container_add(GTK_CONTAINER(halign), hbox_gru1);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
 
 	//-----------------
-	// VIGRU
+	// VIGRU 1
 	//----------------
-	hbox_vigru= gtk_hbox_new(FALSE, 10);
-	label_vigru = gtk_label_new("VIGRU"); 
-	gtk_box_pack_start(GTK_BOX(hbox_vigru), label_vigru, TRUE, TRUE, 0);
+	hbox_vigru1= gtk_hbox_new(FALSE, 10);
+	label_vigru1 = gtk_label_new("VIGRU Online"); 
+	gtk_box_pack_start(GTK_BOX(hbox_vigru1), label_vigru1, TRUE, TRUE, 0);
 
-	button_vigru_launch = gtk_button_new_with_label("Launch");
-	g_signal_connect(G_OBJECT(button_vigru_launch), "clicked", 
-			G_CALLBACK(perform_vigru_launch), NULL);
-	gtk_box_pack_start (GTK_BOX (hbox_vigru), button_vigru_launch, TRUE, TRUE, 0);
+	button_vigru_launch1 = gtk_button_new_with_label("Launch");
+	g_signal_connect(G_OBJECT(button_vigru_launch1), "clicked", 
+			G_CALLBACK(perform_vigru_launch1), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_vigru1), button_vigru_launch1, TRUE, TRUE, 0);
 
 
 
 	//position the box
 	halign = gtk_alignment_new(1, 1, 1, 1);
-	gtk_container_add(GTK_CONTAINER(halign), hbox_vigru);
+	gtk_container_add(GTK_CONTAINER(halign), hbox_vigru1);
+	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
+
+
+	//-----------------
+	// GRU 2
+	//----------------
+	hbox_gru2= gtk_hbox_new(FALSE, 10);
+	label_gru2 = gtk_label_new("GRU Offline"); 
+	gtk_box_pack_start(GTK_BOX(hbox_gru2), label_gru2, TRUE, TRUE, 0);
+
+
+	button_gru_config2 =gtk_button_new_with_label("Open Configuration file Offline");
+	g_signal_connect(G_OBJECT(button_gru_config2), "clicked", 
+			G_CALLBACK(open_gru_config2), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_gru2), button_gru_config2, TRUE, TRUE, 0);
+
+	button_gru_launch2 = gtk_button_new_with_label("Launch");
+	g_signal_connect(G_OBJECT(button_gru_launch2), "clicked", 
+			G_CALLBACK(perform_gru_launch2), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_gru2), button_gru_launch2, TRUE, TRUE, 0);
+
+
+	button_gru_kill2= gtk_button_new_with_label("Kill");
+	g_signal_connect(G_OBJECT(button_gru_kill2), "clicked", 
+			G_CALLBACK(kill_gru2), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_gru2), button_gru_kill2, TRUE, TRUE, 0);
+
+	//position the box
+	halign = gtk_alignment_new(1, 1, 1, 1);
+	gtk_container_add(GTK_CONTAINER(halign), hbox_gru2);
+	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
+
+	//-----------------
+	// VIGRU 2
+	//----------------
+	hbox_vigru2= gtk_hbox_new(FALSE, 10);
+	label_vigru2 = gtk_label_new("VIGRU Offline"); 
+	gtk_box_pack_start(GTK_BOX(hbox_vigru2), label_vigru2, TRUE, TRUE, 0);
+
+	button_vigru_launch2 = gtk_button_new_with_label("Launch");
+	g_signal_connect(G_OBJECT(button_vigru_launch2), "clicked", 
+			G_CALLBACK(perform_vigru_launch2), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_vigru2), button_vigru_launch2, TRUE, TRUE, 0);
+
+
+
+	//position the box
+	halign = gtk_alignment_new(1, 1, 1, 1);
+	gtk_container_add(GTK_CONTAINER(halign), hbox_vigru2);
 	gtk_box_pack_start(GTK_BOX(vbox), halign, TRUE, TRUE, 0);
 
 	//-----------------
@@ -1932,10 +2323,11 @@ int main(int argc, char *argv[]) {
 	label_guser = gtk_label_new("GUser");
 	gtk_box_pack_start(GTK_BOX(hbox_guser), label_guser, TRUE, TRUE, 0);
 
-        button_guser_documentation = gtk_button_new_with_label("Open Documentation");
-        g_signal_connect(G_OBJECT(button_guser_documentation), "clicked",
-                        G_CALLBACK(open_guser_documentation), NULL);
-        gtk_box_pack_start (GTK_BOX (hbox_guser), button_guser_documentation, TRUE, TRUE, 0);
+	button_guser_documentation = gtk_button_new_with_label("Open Documentation");
+	g_signal_connect(G_OBJECT(button_guser_documentation), "clicked", 
+			G_CALLBACK(open_guser_documentation), NULL);
+	gtk_box_pack_start (GTK_BOX (hbox_guser), button_guser_documentation, TRUE, TRUE, 0);
+
 
 	button_guser_workspace = gtk_button_new_with_label("Open Workspace");
 	g_signal_connect(G_OBJECT(button_guser_workspace), "clicked", 
